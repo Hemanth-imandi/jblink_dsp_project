@@ -114,18 +114,35 @@ The Grafana dashboard offers monitoring for:
 *   Model drift detection
 
 ## Project Structure
+## Project Structure
 ```markdown
-├── app.py                 # Streamlit UI
-├── main.py                # FastAPI application
-├── crud.py                # Database operations
-├── database.py            # Database models and connection
-├── model/                 # ML model artifacts
-│   └── jbchurn_model.pkl  # Trained model
-├── dags/                  # Airflow DAGs
-│   └── prediction_dag.py  # Scheduled prediction job
-├── monitoring/            # Grafana dashboards
-└── data/                  # Sample data
-```
+├── airflow/                      # Airflow configuration and DAGs
+│   ├── config/                   # Airflow config files
+│   ├── dags/                     # DAG definition files
+│   │   └── prediction_job.py     # Prediction scheduling DAG
+│   ├── docker-compose.yaml       # Docker compose config
+│   └── .env                      # Environment variables
+├── api/                          # API implementation
+│   ├── __init__.py
+│   ├── app.py                   
+│   ├── crud.py                   # Database operations
+│   ├── database.py               # Database models
+│   └── main.py                   # FastAPI application
+├── data_ingestion/               # Data pipeline components
+│   ├── bad_data/                 # Failed validation data
+│   ├── good_data/               # Validated data
+│   └── raw_data/                # Input data files
+├── JB_dataset/                   # Dataset files
+│   ├── processed/               # Processed data
+│   └── raw/                     # Raw data files
+├── model/                        # Model artifacts
+│   └── jbchurn_model.pkl        # Trained model
+├── notebook/                     # Jupyter notebooks
+│   ├── app.ipynb                # UI development
+│   ├── main.ipynb               # API development
+│   └── model.ipynb              # Model development
+├── README.md                     # Project documentation
+└── requirements.txt              # Python dependencies
 
 ## Contributing
 
