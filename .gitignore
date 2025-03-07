@@ -177,3 +177,8 @@ cython_debug/
 # Exclude data from raw_data_with_issues folder
 /JB_dataset/raw_data_with_issues/*
 !/JB_dataset/raw_data_with_issues/.gitkeep
+
+# Ignore specific airflow subdirectories
+airflow/plugins/
+airflow/logs/
+airflow/config/
