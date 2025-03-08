@@ -102,14 +102,6 @@ The model is trained on the JB Link Telco Customer Churn Dataset, which includes
 *   **Numeric Features:** Tenure, MonthlyCharges, TotalCharges
 *   **Boolean Features:** SeniorCitizen, Churn
 
-## Monitoring
-
-The Grafana dashboard offers monitoring for:
-
-*   Prediction distribution
-*   Feature distribution
-*   Data quality issues
-*   Model drift detection
 
 ## Project Structure
 ```markdown
@@ -141,6 +133,16 @@ The Grafana dashboard offers monitoring for:
 │   └── model.ipynb              # Model development
 ├── README.md                     # Project documentation
 └── requirements.txt              # Python dependencies
+
+## Next Steps:
+## Monitoring
+The Grafana dashboard will offer monitoring for:
+
+*   Prediction distribution
+*   Feature distribution
+*   Data quality issues
+*   Model drift detection
+
 
 ## Contributing
 
