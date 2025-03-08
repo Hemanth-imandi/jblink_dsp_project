@@ -120,19 +120,21 @@ The model is trained on the JB Link Telco Customer Churn Dataset, which includes
 │   └── main.py                   # FastAPI application
 ├── data_ingestion/               # Data pipeline components
 │   ├── bad_data/                 # Failed validation data
-│   ├── good_data/               # Validated data
-│   └── raw_data/                # Input data files
+│   ├── good_data/                # Validated data
+│   └── raw_data/                 # Input data files
 ├── JB_dataset/                   # Dataset files
-│   ├── processed/               # Processed data
-│   └── raw/                     # Raw data files
+│   ├── processed/                # Processed data
+│   └── raw/                      # Raw data files
 ├── model/                        # Model artifacts
-│   └── jbchurn_model.pkl        # Trained model
+│   └── jbchurn_model.pkl         # Trained model
 ├── notebook/                     # Jupyter notebooks
-│   ├── app.ipynb                # UI development
-│   ├── main.ipynb               # API development
-│   └── model.ipynb              # Model development
+│   ├── data_issues.ipynb         # Notebook for generating data issues
+│   ├── model.ipynb               # Model development
+├── scripts/                      # Python scripts
+|   ├── data_split.py             # Script for splitting data
+└── requirements.txt              # Python dependencies 
 ├── README.md                     # Project documentation
-└── requirements.txt              # Python dependencies
+
 
 ## Next Steps:
 ## Monitoring
