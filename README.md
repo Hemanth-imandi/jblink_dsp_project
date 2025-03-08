@@ -10,6 +10,7 @@ This project is a comprehensive data science production system designed for JB L
 *   Hemanthvenkatadurgasai Surendra Babu Imandi
 *   Vinay Gaddam
 *   Pawan Kumar Burla
+*   Sri Sainath Reddy Chinakala
 
 ## Features
 
@@ -17,9 +18,6 @@ This project is a comprehensive data science production system designed for JB L
 *   **Batch Prediction:** Upload CSV files to predict churn for multiple customers simultaneously.
 *   **Historical Data Viewing:** Access and filter past predictions to analyze trends.
 *   **Data Quality Validation:** Ensure incoming data meets predefined quality standards.
-*   **Model Performance Monitoring:** Track prediction accuracy and detect data drift.
-*   **Explainable AI:** Gain insights into the factors driving churn predictions using SHAP values.
-*   **Customizable Thresholds:** Adjust churn probability thresholds to align with different risk levels.
 
 ## Getting Started
 
@@ -114,12 +112,12 @@ The Grafana dashboard offers monitoring for:
 *   Model drift detection
 
 ## Project Structure
-## Project Structure
 ```markdown
 ├── airflow/                      # Airflow configuration and DAGs
 │   ├── config/                   # Airflow config files
 │   ├── dags/                     # DAG definition files
 │   │   └── prediction_job.py     # Prediction scheduling DAG
+|   |   └── data_ingestion.py     # Data ingestion scheduling
 │   ├── docker-compose.yaml       # Docker compose config
 │   └── .env                      # Environment variables
 ├── api/                          # API implementation
