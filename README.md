@@ -10,7 +10,7 @@ This project is a comprehensive data science production system designed for JB L
 *   Hemanthvenkatadurgasai Surendra Babu Imandi
 *   Vinay Gaddam
 *   Pawan Kumar Burla
-*   Sri Sainath Reddy Chinakala
+*   Sri Sainath Reddy Chilakala
 
 ## Features
 
