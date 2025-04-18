@@ -57,7 +57,7 @@ This project is a comprehensive data science production system designed for JB L
 
 ### Running the Application
 
-1.  **Start the FastAPI server:**
+1.  **Start the FastAPI server:** 
 
     ```bash
     uvicorn main:ChurnApp --reload
