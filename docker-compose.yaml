@@ -1,0 +1,280 @@
+# Modified Airflow configuration with FastAPI and Streamlit services
+---
+x-airflow-common:
+  &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.10.4}
+  environment:
+    &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    AIRFLOW__API__AUTH_BACKENDS: 'airflow.api.auth.backend.basic_auth,airflow.api.auth.backend.session'
+    AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
+    PREDICTION_DB_CONN: postgresql+psycopg2://postgres:jblink@prediction-db/jblink_db
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:-psycopg2-binary sqlalchemy great_expectations>=0.15.0 pandas requests python-dotenv}
+    # Add environment variables for Airflow DAGs
+    DATABASE_URL: postgresql://postgres:jblink@prediction-db:5432/jblink_db
+    BASE_DIR: /opt/airflow
+    TEAMS_WEBHOOK_URL: ${TEAMS_WEBHOOK_URL}
+    DOCKER_ENVIRONMENT: "true"
+  volumes:
+    - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
+    - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
+    - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
+    - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
+    - C:\Users\HP\Downloads\jblink_dsp_project\data_ingestion:/opt/airflow/data_ingestion
+    # Mount .env file for environment variables
+    - ${AIRFLOW_PROJ_DIR:-.}/.env:/opt/airflow/.env:ro
+  user: "${AIRFLOW_UID:-50000}:0"
+  depends_on:
+    &airflow-common-depends-on
+    postgres:
+      condition: service_healthy
+    prediction-db:
+      condition: service_healthy
+  networks:
+    - airflow-network
+    - shared-network
+
+services:
+  fastapi:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: jblink_fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      - DOCKER_ENVIRONMENT=true
+      - DATABASE_URL=postgresql://postgres:jblink@prediction-db:5432/jblink_db
+      - MODEL_PATH=/app/model/jbchurn_model.pkl
+    volumes:
+      - ./model:/app/model
+      # Mount .env file for FastAPI
+      - ./.env:/app/.env:ro
+    depends_on:
+      prediction-db:
+        condition: service_healthy
+    networks:
+      - shared-network
+    restart: always
+
+  webapp:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: jblink_webapp
+    ports:
+      - "8501:8501"
+    environment:
+      - DOCKER_ENVIRONMENT=true
+      - PREDICTION_API_URL=http://fastapi:8000
+    volumes:
+      # Mount .env file for Streamlit
+      - ./.env:/app/.env:ro
+    depends_on:
+      - fastapi
+    networks:
+      - shared-network
+    restart: always
+
+  jblink_grafana:
+    image: grafana/grafana:latest
+    container_name: jblink_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana-data:/var/lib/grafana
+      # Optional: Mount Grafana config if you have custom dashboards
+      # - ./grafana/dashboards:/var/lib/grafana/dashboards
+      # - ./grafana/provisioning:/etc/grafana/provisioning
+    depends_on:
+      - prediction-db
+    networks:
+      - shared-network
+    restart: always
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: project
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - prediction-db
+    networks:
+      - shared-network
+    restart: always
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - airflow-network
+      - shared-network
+
+  prediction-db:
+    image: postgres:13
+    container_name: prediction_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: jblink
+      POSTGRES_DB: jblink_db
+    volumes:
+      - prediction-db-volume:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck: 
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+    restart: always
+    networks:
+      - airflow-network
+      - shared-network
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8081:8080"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-triggerer:
+    <<: *airflow-common
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: always
+    depends_on:
+      <<: *airflow-common-depends-on
+      airflow-init:
+        condition: service_completed_successfully
+
+  airflow-init:
+    <<: *airflow-common
+    entrypoint: /bin/bash
+    command:
+      - -c
+      - |
+        airflow_version=$(airflow version)
+        echo "Airflow version: ${airflow_version}"
+        if [[ -z "${AIRFLOW_UID}" ]]; then
+          echo
+          echo -e "\033[1;33mWARNING!!!: AIRFLOW_UID not set!\e[0m"
+          echo
+        fi
+        one_meg=1048576
+        mem_available=$$(($$(getconf _PHYS_PAGES) * $$(getconf PAGE_SIZE) / one_meg))
+        cpus_available=$$(grep -cE 'cpu[0-9]+' /proc/stat)
+        disk_available=$$(df / | tail -1 | awk '{print $$4}')
+        warning_resources="false"
+        if (( mem_available < 4000 )) ; then
+          echo -e "\033[1;33mWARNING!!!: Not enough memory available for Docker.\e[0m"
+          warning_resources="true"
+        fi
+        if (( cpus_available < 2 )); then
+          echo -e "\033[1;33mWARNING!!!: Not enough CPUS available for Docker.\e[0m"
+          warning_resources="true"
+        fi
+        if (( disk_available < one_meg * 10 )); then
+          echo -e "\033[1;33mWARNING!!!: Not enough Disk space available for Docker.\e[0m"
+          warning_resources="true"
+        fi
+        if [[ $${warning_resources} == "true" ]]; then
+          echo -e "\033[1;33mWARNING!!!: You have not enough resources to run Airflow (see above)!\e[0m"
+        fi
+        for dir in "logs" "dags" "plugins"; do
+          if [ ! -d "/sources/$dir" ]; then
+            mkdir -p "/sources/$dir"
+          fi
+          chown -R "${AIRFLOW_UID}:0" "/sources/$dir"
+        done
+        exec /entrypoint airflow version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_MIGRATE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${_AIRFLOW_WWW_USER_USERNAME:-airflow}
+      _AIRFLOW_WWW_USER_PASSWORD: ${_AIRFLOW_WWW_USER_PASSWORD:-airflow}
+      _PIP_ADDITIONAL_REQUIREMENTS: ''
+    user: "0:0"
+    volumes:
+      - ${AIRFLOW_PROJ_DIR:-.}:/sources
+    networks:
+      - airflow-network
+      - shared-network
+
+  airflow-cli:
+    <<: *airflow-common
+    profiles:
+      - debug
+    environment:
+      <<: *airflow-common-env
+      CONNECTION_CHECK_MAX_COUNT: "0"
+    command:
+      - bash
+      - -c
+      - airflow
+
+volumes:
+  postgres-db-volume:
+  prediction-db-volume:
+  pgadmin-data:
+  grafana-data:
+
+networks:
+  airflow-network:
+    driver: bridge
+  shared-network:
+    driver: bridge
