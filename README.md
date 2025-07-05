@@ -242,12 +242,6 @@ python scripts/data_split.py
 
 ## Production Deployment
 
-### Performance Optimizations
-- Batch Processing: O(N) → O(1) optimization
-- Database Transactions: Single commits for batch operations
-- Efficient File Tracking: JSON-based processing state
-- Container Orchestration: Docker networking and volume management
-
 ### Monitoring & Alerting
 - Real-time Dashboards
 - Automated Notifications
@@ -269,32 +263,11 @@ curl http://localhost:8000/health
 docker-compose logs [service-name]
 ```
 
-## Performance Metrics
-
-- Prediction Latency: Under 500ms for batch
-- Data Processing Rate: 1 file/minute
-- System Uptime: 99.9% with Docker restart policies
-- Scalability: Supports concurrent usage and batch loads
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Future Enhancements
-
-- Model Retraining Pipeline
-- A/B Testing Framework
-- Advanced Monitoring
-- API Rate Limiting
-- Multi-tenant Support
 
 ---
 
