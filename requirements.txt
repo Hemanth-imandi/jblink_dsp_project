@@ -1,8 +1,17 @@
-uvicorn == 0.34.0
-fastapi == 0.115.11 # Is pydantic part of fastapi? 
-pandas == 2.2.3
-sqlalchemy == 2.0.38
-psycopg2 ==  2.9.10
-scikit-learn ==  1.6.1
-
-streamlit == 1.42.2
+git
+pandas==1.5.3
+numpy==1.26.0
+scikit-learn== 1.6.1
+seaborn==0.13.2
+matplotlib==3.10.0
+pickle==1.4.2
+pendulum==2.1.2
+fastapi==0.115.8
+uvicorn==0.34.0
+streamlit==1.27.2
+requests==2.31.0
+sqlalchemy==2.0.37
+psycopg2==2.9.10
+pydantic==1.10.7
+v
+pickle-mixin==1.0.2
